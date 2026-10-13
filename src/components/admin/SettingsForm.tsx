@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { useAdminLanguage } from '@/contexts/AdminLanguageContext'
 import type { SiteSettings } from '@/lib/types'
+import { upload } from '@vercel/blob/client'
 
 interface SettingsFormProps {
   settings: SiteSettings | null
@@ -218,22 +219,56 @@ export function SettingsForm({ settings, onClose, onSaved }: SettingsFormProps) 
     })
   }
 
-  const uploadFile = async (file: File): Promise<string | null> => {
-    try {
-      const body = new FormData()
-      body.append('file', file)
-      const res = await fetch('/api/upload', { method: 'POST', body })
-      const data = await res.json()
-      if (!res.ok) {
-        toast.error(data.error || t('settings_form_upload_error'))
-        return null
-      }
-      return data.url as string
-    } catch (error) {
-      toast.error(t('settings_form_upload_error'))
+  
+const uploadFile = async (file: File): Promise<string | null> => {
+  try {
+    const isImage = file.type.startsWith('image/')
+    const isVideo = file.type.startsWith('video/')
+
+    const allowedTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/gif',
+      'video/mp4',
+      'video/webm',
+      'video/ogg',
+    ]
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('نوع الملف غير مدعوم')
       return null
     }
+
+    const maxSize = isVideo
+      ? 50 * 1024 * 1024
+      : 5 * 1024 * 1024
+
+    if (file.size > maxSize) {
+      toast.error(
+        isVideo
+          ? 'حجم الفيديو يجب ألا يتجاوز 50 ميجابايت'
+          : 'حجم الصورة يجب ألا يتجاوز 5 ميجابايت'
+      )
+      return null
+    }
+
+    const folder = isVideo ? 'videos' : 'images'
+    const pathname = `${folder}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+
+    const blob = await upload(pathname, file, {
+      access: 'public',
+      handleUploadUrl: '/api/upload/prepare',
+    })
+
+    return blob.url
+  } catch (error) {
+    console.error('Upload failed:', error)
+    toast.error(t('settings_form_upload_error'))
+    return null
   }
+}
+
 
   const handleHeroImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files

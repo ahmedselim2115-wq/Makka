@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import { useAdminLanguage } from '@/contexts/AdminLanguageContext'
 import type { Product } from '@/lib/types'
+import { upload } from '@vercel/blob/client'
 
 interface ProductFormProps {
   product: Product | null
@@ -135,44 +136,42 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
   }))
 }
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  
+const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  if (!file) return
 
-    if (!file.type.startsWith('image/')) {
-      toast.error(t('product_form_upload_invalid_type'))
-      return
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error(t('product_form_upload_too_large'))
-      return
-    }
-
-    setUploading(true)
-    try {
-      const fd = new FormData()
-      fd.append('file', file)
-
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: fd,
-      })
-
-      const data = await res.json()
-
-      if (res.ok) {
-        handleChange('imageUrl', data.url)
-        toast.success(t('product_form_upload_success'))
-      } else {
-        toast.error(data.error || t('product_form_upload_error'))
-      }
-    } catch (error) {
-      toast.error(t('product_form_upload_error'))
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }
+  if (!file.type.startsWith('image/')) {
+    toast.error(t('product_form_upload_invalid_type'))
+    return
   }
+
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error(t('product_form_upload_too_large'))
+    return
+  }
+
+  setUploading(true)
+
+  try {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+    const pathname = `images/${crypto.randomUUID()}-${safeName}`
+
+    const blob = await upload(pathname, file, {
+      access: 'public',
+      handleUploadUrl: '/api/upload/prepare',
+    })
+
+    handleChange('imageUrl', blob.url)
+    toast.success(t('product_form_upload_success'))
+  } catch (error) {
+    console.error('Product image upload failed:', error)
+    toast.error(t('product_form_upload_error'))
+  } finally {
+    setUploading(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+}
 
   const handleRemoveImage = () => {
     handleChange('imageUrl', '')

@@ -1,38 +1,56 @@
+
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
+import { put } from '@vercel/blob'
 import path from 'path'
-import { existsSync } from 'fs'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser, hasPermission } from '@/lib/auth'
+
+export const runtime = 'nodejs'
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024
 
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg']
+const ALLOWED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+]
 
-const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES]
+const ALLOWED_VIDEO_TYPES = [
+  'video/mp4',
+  'video/webm',
+  'video/ogg',
+]
 
-// مسار التخزين: بره public وبره .next/standalone تماماً
-// لو حطيت متغير بيئة UPLOAD_DIR (مثلاً لما تربط Railway Volume) هيستخدمه
-// وإلا هيستخدم مجلد "uploads" في جذر المشروع وقت التشغيل
-const UPLOAD_ROOT = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads')
+const ALLOWED_TYPES = [
+  ...ALLOWED_IMAGE_TYPES,
+  ...ALLOWED_VIDEO_TYPES,
+]
 
 export async function POST(req: NextRequest) {
-  const user = await getCurrentUser()
-  if (!user) {
-    return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })
-  }
   try {
-    const formData = await req.formData()
-    const file = formData.get('file') as File | null
+    const user = await getCurrentUser()
 
-    if (!file) {
-      return NextResponse.json({ error: 'لم يتم اختيار ملف' }, { status: 400 })
+   if (!user || !hasPermission(user, 'settings.manage')) {
+  return NextResponse.json(
+    { error: 'غير مصرح لك برفع الملفات' },
+    { status: 403 }
+  )
+}
+
+    const formData = await req.formData()
+    const file = formData.get('file')
+
+    if (!(file instanceof File)) {
+      return NextResponse.json(
+        { error: 'لم يتم اختيار ملف' },
+        { status: 400 }
+      )
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: 'نوع الملف غير مدعوم، الرجاء رفع صورة (jpg, png, webp, gif) أو فيديو (mp4, webm, ogg)' },
+        { error: 'نوع الملف غير مدعوم' },
         { status: 400 }
       )
     }
@@ -51,26 +69,33 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-
-    const ext = path.extname(file.name) || (isVideo ? '.mp4' : '.jpg')
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}${ext}`
+    const ext = path.extname(file.name).toLowerCase()
+    const safeExt = /^\.[a-z0-9]{1,10}$/.test(ext)
+      ? ext
+      : isVideo
+        ? '.mp4'
+        : '.jpg'
 
     const subDir = isVideo ? 'videos' : 'images'
-    const uploadDir = path.join(UPLOAD_ROOT, subDir)
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true })
-    }
+    const fileName = `${Date.now()}-${crypto.randomUUID()}${safeExt}`
 
-    const filePath = path.join(uploadDir, fileName)
-    await writeFile(filePath, buffer)
+    const blob = await put(
+      `${subDir}/${fileName}`,
+      file,
+      {
+        access: 'public',
+        addRandomSuffix: false,
+        contentType: file.type,
+      }
+    )
 
-    // الرابط بيوجه لراوت التقديم الخاص بنا مش لمجلد public
-    const url = `/api/files/${subDir}/${fileName}`
-    return NextResponse.json({ url })
+    return NextResponse.json({ url: blob.url })
   } catch (error) {
     console.error('Error uploading file:', error)
-    return NextResponse.json({ error: 'حدث خطأ أثناء رفع الملف' }, { status: 500 })
+
+    return NextResponse.json(
+      { error: 'حدث خطأ أثناء رفع الملف' },
+      { status: 500 }
+    )
   }
 }

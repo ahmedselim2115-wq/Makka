@@ -1,0 +1,253 @@
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/admin/SettingsForm.tsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/package.json b/package.json[m
+[1mindex 3de7bc2..3731fa4 100644[m
+[1m--- a/package.json[m
+[1m+++ b/package.json[m
+[36m@@ -2,16 +2,16 @@[m
+   "name": "nextjs_tailwind_shadcn_ts",[m
+   "version": "0.2.0",[m
+   "private": true,[m
+[31m- "scripts": {[m
+[31m-  "dev": "next dev -p 3000",[m
+[31m-  "build": "prisma generate && next build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public",[m
+[31m-  "start": "HOSTNAME=0.0.0.0 node .next/standalone/server.js",[m
+[31m-  "lint": "eslint .",[m
+[31m-  "db:push": "prisma db push",[m
+[31m-  "db:generate": "prisma generate",[m
+[31m-  "db:migrate": "prisma migrate dev",[m
+[31m-  "db:reset": "prisma migrate reset"[m
+[31m-},[m
+[32m+[m[32m  "scripts": {[m
+[32m+[m[32m    "dev": "next dev -p 3000",[m
+[32m+[m[32m    "build": "prisma generate && next build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public",[m
+[32m+[m[32m    "start": "HOSTNAME=0.0.0.0 node .next/standalone/server.js",[m
+[32m+[m[32m    "lint": "eslint .",[m
+[32m+[m[32m    "db:push": "prisma db push",[m
+[32m+[m[32m    "db:generate": "prisma generate",[m
+[32m+[m[32m    "db:migrate": "prisma migrate dev",[m
+[32m+[m[32m    "db:reset": "prisma migrate reset"[m
+[32m+[m[32m  },[m
+   "dependencies": {[m
+     "@dnd-kit/core": "^6.3.1",[m
+     "@dnd-kit/sortable": "^10.0.0",[m
+[36m@@ -50,6 +50,7 @@[m
+     "@reactuses/core": "^6.0.5",[m
+     "@tanstack/react-query": "^5.82.0",[m
+     "@tanstack/react-table": "^8.21.3",[m
+[32m+[m[32m    "@vercel/blob": "^2.8.1",[m
+     "bcryptjs": "^3.0.3",[m
+     "class-variance-authority": "^0.7.1",[m
+     "cloudinary": "^2.10.0",[m
+[1mdiff --git a/src/app/api/upload/route.ts b/src/app/api/upload/route.ts[m
+[1mindex 8c17a77..eea0f31 100644[m
+[1m--- a/src/app/api/upload/route.ts[m
+[1m+++ b/src/app/api/upload/route.ts[m
+[36m@@ -1,38 +1,56 @@[m
+[32m+[m
+ import { NextRequest, NextResponse } from 'next/server'[m
+[31m-import { writeFile, mkdir } from 'fs/promises'[m
+[32m+[m[32mimport { put } from '@vercel/blob'[m
+ import path from 'path'[m
+[31m-import { existsSync } from 'fs'[m
+[31m-import { getCurrentUser } from '@/lib/auth'[m
+[32m+[m[32mimport { getCurrentUser, hasPermission } from '@/lib/auth'[m
+[32m+[m
+[32m+[m[32mexport const runtime = 'nodejs'[m
+ [m
+ const MAX_IMAGE_SIZE = 5 * 1024 * 1024[m
+ const MAX_VIDEO_SIZE = 50 * 1024 * 1024[m
+ [m
+[31m-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'][m
+[31m-const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg'][m
+[32m+[m[32mconst ALLOWED_IMAGE_TYPES = [[m
+[32m+[m[32m  'image/jpeg',[m
+[32m+[m[32m  'image/png',[m
+[32m+[m[32m  'image/webp',[m
+[32m+[m[32m  'image/gif',[m
+[32m+[m[32m][m
+ [m
+[31m-const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES][m
+[32m+[m[32mconst ALLOWED_VIDEO_TYPES = [[m
+[32m+[m[32m  'video/mp4',[m
+[32m+[m[32m  'video/webm',[m
+[32m+[m[32m  'video/ogg',[m
+[32m+[m[32m][m
+ [m
+[31m-// مسار التخزين: بره public وبره .next/standalone تماماً[m
+[31m-// لو حطيت متغير بيئة UPLOAD_DIR (مثلاً لما تربط Railway Volume) هيستخدمه[m
+[31m-// وإلا هيستخدم مجلد "uploads" في جذر المشروع وقت التشغيل[m
+[31m-const UPLOAD_ROOT = process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads')[m
+[32m+[m[32mconst ALLOWED_TYPES = [[m
+[32m+[m[32m  ...ALLOWED_IMAGE_TYPES,[m
+[32m+[m[32m  ...ALLOWED_VIDEO_TYPES,[m
+[32m+[m[32m][m
+ [m
+ export async function POST(req: NextRequest) {[m
+[31m-  const user = await getCurrentUser()[m
+[31m-  if (!user) {[m
+[31m-    return NextResponse.json({ error: 'غير مصرح' }, { status: 401 })[m
+[31m-  }[m
+   try {[m
+[32m+[m[32m    const user = await getCurrentUser()[m
+[32m+[m
+[32m+[m[32m   if (!user || !hasPermission(user, 'settings.manage')) {[m
+[32m+[m[32m  return NextResponse.json([m
+[32m+[m[32m    { error: 'غير مصرح لك برفع الملفات' },[m
+[32m+[m[32m    { status: 403 }[m
+[32m+[m[32m  )[m
+[32m+[m[32m}[m
+[32m+[m
+     const formData = await req.formData()[m
+[31m-    const file = formData.get('file') as File | null[m
+[32m+[m[32m    const file = formData.get('file')[m
+ [m
+[31m-    if (!file) {[m
+[31m-      return NextResponse.json({ error: 'لم يتم اختيار ملف' }, { status: 400 })[m
+[32m+[m[32m    if (!(file instanceof File)) {[m
+[32m+[m[32m      return NextResponse.json([m
+[32m+[m[32m        { error: 'لم يتم اختيار ملف' },[m
+[32m+[m[32m        { status: 400 }[m
+[32m+[m[32m      )[m
+     }[m
+ [m
+     if (!ALLOWED_TYPES.includes(file.type)) {[m
+       return NextResponse.json([m
+[31m-        { error: 'نوع الملف غير مدعوم، الرجاء رفع صورة (jpg, png, webp, gif) أو فيديو (mp4, webm, ogg)' },[m
+[32m+[m[32m        { error: 'نوع الملف غير مدعوم' },[m
+         { status: 400 }[m
+       )[m
+     }[m
+[36m@@ -51,26 +69,33 @@[m [mexport async function POST(req: NextRequest) {[m
+       )[m
+     }[m
+ [m
+[31m-    const bytes = await file.arrayBuffer()[m
+[31m-    const buffer = Buffer.from(bytes)[m
+[31m-[m
+[31m-    const ext = path.extname(file.name) || (isVideo ? '.mp4' : '.jpg')[m
+[31m-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}${ext}`[m
+[32m+[m[32m    const ext = path.extname(file.name).toLowerCase()[m
+[32m+[m[32m    const safeExt = /^\.[a-z0-9]{1,10}$/.test(ext)[m
+[32m+[m[32m      ? ext[m
+[32m+[m[32m      : isVideo[m
+[32m+[m[32m        ? '.mp4'[m
+[32m+[m[32m        : '.jpg'[m
+ [m
+     const subDir = isVideo ? 'videos' : 'images'[m
+[31m-    const uploadDir = path.join(UPLOAD_ROOT, subDir)[m
+[31m-    if (!existsSync(uploadDir)) {[m
+[31m-      await mkdir(uploadDir, { recursive: true })[m
+[31m-    }[m
+[32m+[m[32m    const fileName = `${Date.now()}-${crypto.randomUUID()}${safeExt}`[m
+ [m
+[31m-    const filePath = path.join(uploadDir, fileName)[m
+[31m-    await writeFile(filePath, buffer)[m
+[32m+[m[32m    const blob = await put([m
+[32m+[m[32m      `${subDir}/${fileName}`,[m
+[32m+[m[32m      file,[m
+[32m+[m[32m      {[m
+[32m+[m[32m        access: 'public',[m
+[32m+[m[32m        addRandomSuffix: false,[m
+[32m+[m[32m        contentType: file.type,[m
+[32m+[m[32m      }[m
+[32m+[m[32m    )[m
+ [m
+[31m-    // الرابط بيوجه لراوت التقديم الخاص بنا مش لمجلد public[m
+[31m-    const url = `/api/files/${subDir}/${fileName}`[m
+[31m-    return NextResponse.json({ url })[m
+[32m+[m[32m    return NextResponse.json({ url: blob.url })[m
+   } catch (error) {[m
+     console.error('Error uploading file:', error)[m
+[31m-    return NextResponse.json({ error: 'حدث خطأ أثناء رفع الملف' }, { status: 500 })[m
+[32m+[m
+[32m+[m[32m    return NextResponse.json([m
+[32m+[m[32m      { error: 'حدث خطأ أثناء رفع الملف' },[m
+[32m+[m[32m      { status: 500 }[m
+[32m+[m[32m    )[m
+   }[m
+[31m-}[m
+\ No newline at end of file[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/components/admin/SettingsForm.tsx b/src/components/admin/SettingsForm.tsx[m
+[1mindex 2201344..634773f 100644[m
+[1m--- a/src/components/admin/SettingsForm.tsx[m
+[1m+++ b/src/components/admin/SettingsForm.tsx[m
+[36m@@ -9,6 +9,7 @@[m [mimport { Textarea } from '@/components/ui/textarea'[m
+ import { toast } from 'sonner'[m
+ import { useAdminLanguage } from '@/contexts/AdminLanguageContext'[m
+ import type { SiteSettings } from '@/lib/types'[m
+[32m+[m[32mimport { upload } from '@vercel/blob/client'[m
+ [m
+ interface SettingsFormProps {[m
+   settings: SiteSettings | null[m
+[36m@@ -218,22 +219,56 @@[m [mexport function SettingsForm({ settings, onClose, onSaved }: SettingsFormProps)[m
+     })[m
+   }[m
+ [m
+[31m-  const uploadFile = async (file: File): Promise<string | null> => {[m
+[31m-    try {[m
+[31m-      const body = new FormData()[m
+[31m-      body.append('file', file)[m
+[31m-      const res = await fetch('/api/upload', { method: 'POST', body })[m
+[31m-      const data = await res.json()[m
+[31m-      if (!res.ok) {[m
+[31m-        toast.error(data.error || t('settings_form_upload_error'))[m
+[31m-        return null[m
+[31m-      }[m
+[31m-      return data.url as string[m
+[31m-    } catch (error) {[m
+[31m-      toast.error(t('settings_form_upload_error'))[m
+[32m+[m[41m  [m
+[32m+[m[32mconst uploadFile = async (file: File): Promise<string | null> => {[m
+[32m+[m[32m  try {[m
+[32m+[m[32m    const isImage = file.type.startsWith('image/')[m
+[32m+[m[32m    const isVideo = file.type.startsWith('video/')[m
+[32m+[m
+[32m+[m[32m    const allowedTypes = [[m
+[32m+[m[32m      'image/jpeg',[m
+[32m+[m[32m      'image/png',[m
+[32m+[m[32m      'image/webp',[m
+[32m+[m[32m      'image/gif',[m
+[32m+[m[32m      'video/mp4',[m
+[32m+[m[32m      'video/webm',[m
+[32m+[m[32m      'video/ogg',[m
+[32m+[m[32m    ][m
+[32m+[m
+[32m+[m[32m    if (!allowedTypes.includes(file.type)) {[m
+[32m+[m[32m      toast.error('نوع الملف غير مدعوم')[m
+       return null[m
+     }[m
+[32m+[m
+[32m+[m[32m    const maxSize = isVideo[m
+[32m+[m[32m      ? 50 * 1024 * 1024[m
+[32m+[m[32m      : 5 * 1024 * 1024[m
+[32m+[m
+[32m+[m[32m    if (file.size > maxSize) {[m
+[32m+[m[32m      toast.error([m
+[32m+[m[32m        isVideo[m
+[32m+[m[32m          ? 'حجم الفيديو يجب ألا يتجاوز 50 ميجابايت'[m
+[32m+[m[32m          : 'حجم الصورة يجب ألا يتجاوز 5 ميجابايت'[m
+[32m+[m[32m      )[m
+[32m+[m[32m      return null[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    const folder = isVideo ? 'videos' : 'images'[m
+[32m+[m[32m    const pathname = `${folder}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`[m
+[32m+[m
+[32m+[m[32m    const blob = await upload(pathname, file, {[m
+[32m+[m[32m      access: 'public',[m
+[32m+[m[32m      handleUploadUrl: '/api/upload/prepare',[m
+[32m+[m[32m    })[m
+[32m+[m
+[32m+[m[32m    return blob.url[m
+[32m+[m[32m  } catch (error) {[m
+[32m+[m[32m    console.error('Upload failed:', error)[m
+[32m+[m[32m    toast.error(t('settings_form_upload_error'))[m
+[32m+[m[32m    return null[m
+   }[m
+[32m+[m[32m}[m
+[32m+[m
+ [m
+   const handleHeroImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {[m
+     const files = e.target.files[m

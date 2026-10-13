@@ -5,6 +5,7 @@
   import { Plus, Trash2, X, Upload } from "lucide-react";
   import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
   import { getContainedImageRect } from "@/lib/imageFit";
+  import { upload } from "@vercel/blob/client";
 
   interface Hotspot {
     id: string;
@@ -88,16 +89,38 @@ useEffect(() => {
       });
     };
 
-    const handleImageUpload = async (file: File) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (editing) setEditing({ ...editing, image: data.url });
-    };
+   
+
+const handleImageUpload = async (file: File) => {
+  if (!file.type.startsWith("image/")) {
+    alert("من فضلك اختر ملف صورة");
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert("حجم الصورة يجب ألا يتجاوز 5 ميجابايت");
+    return;
+  }
+
+  try {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const pathname = `images/${crypto.randomUUID()}-${safeName}`;
+
+    const blob = await upload(pathname, file, {
+      access: "public",
+      handleUploadUrl: "/api/upload/prepare",
+    });
+
+    setEditing((current) =>
+      current ? { ...current, image: blob.url } : current
+    );
+  } catch (error) {
+    console.error("Image upload failed:", error);
+    alert("فشل رفع الصورة. حاول مرة أخرى.");
+  }
+};
+
+
 
     const handleStageClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!placingMode || !editing || !imageRef.current) return;
