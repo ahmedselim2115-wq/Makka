@@ -1,98 +1,95 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Product {
-  id            String   @id @default(cuid())
-  name          String
-  nameEn        String?  // English
-  description   String
-  descriptionEn String?  // English
-  price         Float
+  id             String   @id @default(cuid())
+  name           String
+  nameEn         String?
+  description    String
+  descriptionEn  String?
+  price          Float
   compareAtPrice Float?
-  imageUrl      String
-  category      String   @default("ثلاجات")
-  categoryEn    String?  // English (نخزنها هنا بدل ما نعمل join كل مرة)
-  capacity      String?
-  capacityEn    String?  // English
-  temperature   String?
-  temperatureEn String?  // English
-  power         String?
-  powerEn       String?  // English
-  featured      Boolean  @default(false)
-  inStock       Boolean  @default(true)
-  showPrice     Boolean  @default(true)
-  orders        Order[]
-  ratings       Rating[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  imageUrl       String
+  category       String   @default("ثلاجات")
+  categoryEn     String?
+  capacity       String?
+  capacityEn     String?
+  temperature    String?
+  temperatureEn  String?
+  power          String?
+  powerEn        String?
+  featured       Boolean  @default(false)
+  inStock        Boolean  @default(true)
+  showPrice      Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  orders         Order[]
+  ratings        Rating[]
 }
 
 model SiteSettings {
-  id                       String   @id @default(cuid())
-  heroTitle                String   @default("مصنع مكة للثلاجات")
-  heroTitleEn              String?  // English
-  heroSubtitle             String   @default(" التبريد الحديثة")
-  heroSubtitleEn           String?  // English
-  heroImage                String   @default("")
-  heroImages               String?  @db.Text
-  aboutTitle               String   @default("من نحن")
-  aboutTitleEn             String?  // English
-  aboutText                String   @default("مصنع مكة للثلاجات هو مصنع رائد في تصنيع الثلاجات التجارية والصناعية")
-  aboutTextEn              String?  @db.Text // English
-  aboutImage               String   @default("")
-  aboutVideo               String?  @db.Text
-  aboutHeadingHighlight    String   @default("مصنع متكامل")
-  aboutHeadingHighlightEn  String?  // English
-  aboutHeadingRest         String   @default("لتصنيع حلول التبريد")
-  aboutHeadingRestEn       String?  // English
-  aboutPoints              String?  @db.Text
-  aboutPointsEn            String?  @db.Text // English (JSON array of strings)
-  aboutStats               String?  @db.Text
-  aboutStatsEn             String?  @db.Text // English (JSON array of {value,label})
-  productsBadge            String   @default("منتجاتنا")
-  productsBadgeEn          String?  // English
-  productsHeadingRest      String   @default("تشكيلتنا من")
-  productsHeadingRestEn    String?  // English
-  productsHeadingHighlight String   @default("الثلاجات والفريزرات")
-  productsHeadingHighlightEn String? // English
-  productsText             String?  @db.Text
-  productsTextEn           String?  @db.Text // English
-  phone                    String   @default("")
-  email                    String   @default("")
-  address                  String   @default("")
-  workingHours             String   @default("السبت - الخميس: 9 صباحاً - 6 مساءً")
-  workingHoursEn           String?  // English
-  facebook                 String   @default("")
-  instagram                String   @default("")
-  tiktok                   String @default("")  
-  telegram                 String   @default("")
-  whatsapp                 String   @default("")
-  whatsappWidgetEnabled    Boolean  @default(true)
-  whatsappWelcomeMessage   String   @default("مرحباً بك! كيف يمكننا مساعدتك اليوم؟")
-  whatsappWelcomeMessageEn String?  // English
-  mapLocation              String?  @db.Text
-  showcaseTitle             String   @default("استكشف منتجاتنا")
-  showcaseTitleEn           String?  // English
-  showcaseSubtitle          String   @default("تنقل بين المنتجات، وحرّك الماوس لاستكشاف التفاصيل عن قرب")
-  showcaseSubtitleEn        String?  // English
-  adminPassword            String   @default("admin123")
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  id                         String   @id @default(cuid())
+  heroTitle                  String   @default("مصنع مكة للثلاجات")
+  heroTitleEn                String?
+  heroSubtitle               String   @default(" التبريد الحديثة")
+  heroSubtitleEn             String?
+  heroImage                  String   @default("")
+  heroImages                 String?
+  aboutTitle                 String   @default("من نحن")
+  aboutTitleEn               String?
+  aboutText                  String   @default("مصنع مكة للثلاجات هو مصنع رائد في تصنيع الثلاجات التجارية والصناعية")
+  aboutTextEn                String?
+  aboutImage                 String   @default("")
+  aboutVideo                 String?
+  aboutHeadingHighlight      String   @default("مصنع متكامل")
+  aboutHeadingHighlightEn    String?
+  aboutHeadingRest           String   @default("لتصنيع حلول التبريد")
+  aboutHeadingRestEn         String?
+  aboutPoints                String?
+  aboutPointsEn              String?
+  aboutStats                 String?
+  aboutStatsEn               String?
+  productsBadge              String   @default("منتجاتنا")
+  productsBadgeEn            String?
+  productsHeadingRest        String   @default("تشكيلتنا من")
+  productsHeadingRestEn      String?
+  productsHeadingHighlight   String   @default("الثلاجات والفريزرات")
+  productsHeadingHighlightEn String?
+  productsText               String?
+  productsTextEn             String?
+  phone                      String   @default("")
+  email                      String   @default("")
+  address                    String   @default("")
+  workingHours               String   @default("السبت - الخميس: 9 صباحاً - 6 مساءً")
+  workingHoursEn             String?
+  facebook                   String   @default("")
+  instagram                  String   @default("")
+  tiktok                     String   @default("")
+  telegram                   String   @default("")
+  whatsapp                   String   @default("")
+  whatsappWidgetEnabled      Boolean  @default(true)
+  whatsappWelcomeMessage     String   @default("مرحباً بك! كيف يمكننا مساعدتك اليوم؟")
+  whatsappWelcomeMessageEn   String?
+  mapLocation                String?
+  showcaseTitle              String   @default("استكشف منتجاتنا")
+  showcaseTitleEn            String?
+  showcaseSubtitle           String   @default("تنقل بين المنتجات، وحرّك الماوس لاستكشاف التفاصيل عن قرب")
+  showcaseSubtitleEn         String?
+  adminPassword              String   @default("admin123")
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
 }
 
 model Category {
   id        String   @id @default(cuid())
   name      String   @unique
-  nameEn    String?  // English
+  nameEn    String?
   createdAt DateTime @default(now())
 }
 
@@ -103,16 +100,16 @@ model User {
   password     String
   isActive     Boolean      @default(true)
   isSuperAdmin Boolean      @default(false)
-  permissions  Permission[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
+  permissions  Permission[]
 }
 
 model Permission {
   id     String @id @default(cuid())
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   key    String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, key])
 }
@@ -120,13 +117,13 @@ model Permission {
 model ShowcaseProduct {
   id        String            @id @default(cuid())
   name      String
-  nameEn    String?           // English
+  nameEn    String?
   image     String
   order     Int               @default(0)
   isActive  Boolean           @default(true)
-  hotspots  ShowcaseHotspot[]
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
+  hotspots  ShowcaseHotspot[]
 
   @@map("showcase_products")
 }
@@ -134,15 +131,15 @@ model ShowcaseProduct {
 model ShowcaseHotspot {
   id                String          @id @default(cuid())
   showcaseProductId String
-  showcaseProduct   ShowcaseProduct @relation(fields: [showcaseProductId], references: [id], onDelete: Cascade)
   title             String
-  titleEn           String?         // English
+  titleEn           String?
   description       String
-  descriptionEn     String?         // English
+  descriptionEn     String?
   icon              String?
   positionX         Float
   positionY         Float
   order             Int             @default(0)
+  showcaseProduct   ShowcaseProduct @relation(fields: [showcaseProductId], references: [id], onDelete: Cascade)
 
   @@map("showcase_hotspots")
 }
@@ -150,7 +147,6 @@ model ShowcaseHotspot {
 model Order {
   id           String   @id @default(cuid())
   productId    String?
-  product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   productName  String
   customerName String
   phone        String
@@ -160,6 +156,7 @@ model Order {
   source       String   @default("website")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  product      Product? @relation(fields: [productId], references: [id])
 
   @@map("orders")
 }
@@ -167,14 +164,14 @@ model Order {
 model Rating {
   id           String   @id @default(cuid())
   productId    String?
-  product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   productName  String
   customerName String
   phone        String
   value        Int
   comment      String?
-  status       String   @default("pending") 
+  status       String   @default("pending")
   createdAt    DateTime @default(now())
+  product      Product? @relation(fields: [productId], references: [id])
 
   @@map("ratings")
 }
