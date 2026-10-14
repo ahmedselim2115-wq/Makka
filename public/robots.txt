@@ -51,4 +51,4 @@ Disallow: /api/ratings
 Disallow: /api/stats
 Disallow: /api/files
 
-Sitemap: https://makkahrefrigerators.com/sitemap.xml
+Sitemap: https://www.makkahrefrigerators.com/sitemap.xml

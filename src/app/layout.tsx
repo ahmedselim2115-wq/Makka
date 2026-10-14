@@ -7,7 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://makkahrefrigerators.com"),
+  metadataBase: new URL("https://www.makkahrefrigerators.com"),
   title: {
     default: "مصنع مكة للثلاجات | Makkah Refrigerators Factory - Cairo, Egypt",
     template: "%s | مصنع مكة للثلاجات",
@@ -50,16 +50,16 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: "https://makkahrefrigerators.com",
+    canonical: "https://www.makkahrefrigerators.com",
     languages: {
-      'ar-EG': 'https://makkahrefrigerators.com',
-      'en-US': 'https://makkahrefrigerators.com',
+      'ar-EG': 'https://www.makkahrefrigerators.com',
+      'en-US': 'https://www.makkahrefrigerators.com',
     },
   },
   openGraph: {
     title: "مصنع مكة للثلاجات | Makkah Refrigerators Factory",
     description: "حلول تبريد متكاملة - ثلاجات تجارية وصناعية | Complete refrigeration solutions - commercial & industrial refrigerators",
-    url: "https://makkahrefrigerators.com",
+    url: "https://www.makkahrefrigerators.com",
     siteName: "مصنع مكة للثلاجات",
     images: ["/logo.png"],
     type: "website",
