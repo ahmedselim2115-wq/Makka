@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import { useAdminLanguage } from '@/contexts/AdminLanguageContext'
 import type { Product } from '@/lib/types'
-import { upload } from '@vercel/blob/client'
+import { uploadFileToCloudinary } from '@/lib/upload'
 
 interface ProductFormProps {
   product: Product | null
@@ -138,40 +138,34 @@ export function ProductForm({ product, onClose, onSaved }: ProductFormProps) {
 
   
 const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0]
-  if (!file) return
+    const file = e.target.files?.[0]
+    if (!file) return
 
-  if (!file.type.startsWith('image/')) {
-    toast.error(t('product_form_upload_invalid_type'))
-    return
+    if (!file.type.startsWith('image/')) {
+      toast.error(t('product_form_upload_invalid_type'))
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t('product_form_upload_too_large'))
+      return
+    }
+
+    setUploading(true)
+
+    try {
+      const url = await uploadFileToCloudinary(file)
+
+      handleChange('imageUrl', url)
+      toast.success(t('product_form_upload_success'))
+    } catch (error) {
+      console.error('Product image upload failed:', error)
+      toast.error(t('product_form_upload_error'))
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
   }
-
-  if (file.size > 5 * 1024 * 1024) {
-    toast.error(t('product_form_upload_too_large'))
-    return
-  }
-
-  setUploading(true)
-
-  try {
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-    const pathname = `images/${crypto.randomUUID()}-${safeName}`
-
-    const blob = await upload(pathname, file, {
-      access: 'public',
-      handleUploadUrl: '/api/upload/prepare',
-    })
-
-    handleChange('imageUrl', blob.url)
-    toast.success(t('product_form_upload_success'))
-  } catch (error) {
-    console.error('Product image upload failed:', error)
-    toast.error(t('product_form_upload_error'))
-  } finally {
-    setUploading(false)
-    if (fileInputRef.current) fileInputRef.current.value = ''
-  }
-}
 
   const handleRemoveImage = () => {
     handleChange('imageUrl', '')
@@ -413,7 +407,7 @@ const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
                     type="button"
                     size="sm"
                     variant="destructive"
-                    onClick={handleRemoveImage}
+                   onClick={() => handleChange('imageUrl', '')}
                     disabled={uploading}
                   >
                     <Trash2 className="w-4 h-4 ml-1" />

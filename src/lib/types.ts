@@ -24,18 +24,41 @@ export interface Product {
 
 export interface SiteSettings {
   id: string
+  siteName?: string
+  siteNameEn?: string
   heroTitle: string
+  heroTitleEn?: string
   heroSubtitle: string
+  heroSubtitleEn?: string
   heroImage: string
   heroImages?: string[]
   aboutTitle: string
+  aboutTitleEn?: string
   aboutText: string
+  aboutTextEn?: string
+  aboutHeadingHighlight?: string
+  aboutHeadingHighlightEn?: string
+  aboutHeadingRest?: string
+  aboutHeadingRestEn?: string
+  aboutPoints?: any[]
+  aboutPointsEn?: any[]
+  aboutStats?: any[]
   aboutImage: string
   aboutVideo?: string
+  productsBadge?: string
+  productsBadgeEn?: string
+  productsHeadingRest?: string
+  productsHeadingRestEn?: string
+  productsHeadingHighlight?: string
+  productsHeadingHighlightEn?: string
+  productsText?: string
+  productsTextEn?: string
   phone: string
   email: string
   address: string
+  addressEn?: string
   workingHours: string
+  workingHoursEn?: string
   facebook: string
   instagram: string
   tiktok: string 
@@ -43,13 +66,14 @@ export interface SiteSettings {
   whatsapp: string
   whatsappWidgetEnabled?: boolean
   whatsappWelcomeMessage?: string
+  whatsappWelcomeMessageEn?: string
   mapLocation?: string
   showcaseTitle?: string
   showcaseTitleEn?: string
   showcaseSubtitle?: string
   showcaseSubtitleEn?: string
+  [key: string]: any
 }
-
 
 export interface Stats {
   totalProducts: number

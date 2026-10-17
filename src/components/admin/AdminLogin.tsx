@@ -94,7 +94,7 @@ export function AdminLogin({ onClose, onLogin }: AdminLoginProps) {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@makkah.com"
+                placeholder="admin@example.com"
                 className="pr-10 text-right"
                 dir="ltr"
                 autoFocus

@@ -109,7 +109,10 @@ export default function UsersPage() {
                         key={key}
                         className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground"
                       >
-                        {AVAILABLE_PERMISSIONS.find((p) => p.key === key)?.label || key}
+                       {(() => {
+                          const perm = AVAILABLE_PERMISSIONS.find((p) => p.key === key)
+                          return perm ? t(perm.labelKey) : key
+                        })()}
                       </span>
                     ))}
                   </div>

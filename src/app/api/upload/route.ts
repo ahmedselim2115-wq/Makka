@@ -1,10 +1,15 @@
-
 import { NextRequest, NextResponse } from 'next/server'
-import { put } from '@vercel/blob'
-import path from 'path'
+import { v2 as cloudinary } from 'cloudinary'
 import { getCurrentUser, hasPermission } from '@/lib/auth'
 
 export const runtime = 'nodejs'
+
+// إعداد Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024
@@ -31,12 +36,12 @@ export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser()
 
-   if (!user || !hasPermission(user, 'settings.manage')) {
-  return NextResponse.json(
-    { error: 'غير مصرح لك برفع الملفات' },
-    { status: 403 }
-  )
-}
+    if (!user || !hasPermission(user, 'settings.manage')) {
+      return NextResponse.json(
+        { error: 'غير مصرح لك برفع الملفات' },
+        { status: 403 }
+      )
+    }
 
     const formData = await req.formData()
     const file = formData.get('file')
@@ -62,36 +67,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: isVideo
-            ? 'حجم الفيديو كبير جدًا، الحد الأقصى 50 ميجابايت'
-            : 'حجم الصورة كبير جدًا، الحد الأقصى 5 ميجابايت',
+            ? 'حجم الفيديو كبير جداً، الحد الأقصى 50 ميجابايت'
+            : 'حجم الصورة كبير جداً، الحد الأقصى 5 ميجابايت',
         },
         { status: 400 }
       )
     }
 
-    const ext = path.extname(file.name).toLowerCase()
-    const safeExt = /^\.[a-z0-9]{1,10}$/.test(ext)
-      ? ext
-      : isVideo
-        ? '.mp4'
-        : '.jpg'
+    // تحويل الملف إلى Buffer للرفع على Cloudinary
+    const bytes = await file.arrayBuffer()
+    const buffer = Buffer.from(bytes)
 
-    const subDir = isVideo ? 'videos' : 'images'
-    const fileName = `${Date.now()}-${crypto.randomUUID()}${safeExt}`
+    const folderName = isVideo ? 'makka/videos' : 'makka/images'
+    const resourceType = isVideo ? 'video' : 'image'
 
-    const blob = await put(
-      `${subDir}/${fileName}`,
-      file,
-      {
-        access: 'public',
-        addRandomSuffix: false,
-        contentType: file.type,
-      }
-    )
+    // الرفع عبر Stream إلى Cloudinary
+    const uploadResult = await new Promise<{ secure_url: string }>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: folderName,
+          resource_type: resourceType,
+        },
+        (error, result) => {
+          if (error || !result) {
+            reject(error)
+          } else {
+            resolve(result)
+          }
+        }
+      )
+      uploadStream.end(buffer)
+    })
 
-    return NextResponse.json({ url: blob.url })
+    return NextResponse.json({ url: uploadResult.secure_url })
   } catch (error) {
-    console.error('Error uploading file:', error)
+    console.error('Error uploading file to Cloudinary:', error)
 
     return NextResponse.json(
       { error: 'حدث خطأ أثناء رفع الملف' },

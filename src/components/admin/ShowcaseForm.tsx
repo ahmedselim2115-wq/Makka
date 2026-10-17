@@ -5,7 +5,7 @@
   import { Plus, Trash2, X, Upload } from "lucide-react";
   import { useAdminLanguage } from "@/contexts/AdminLanguageContext";
   import { getContainedImageRect } from "@/lib/imageFit";
-  import { upload } from "@vercel/blob/client";
+  import { uploadFileToCloudinary } from '@/lib/upload'
 
   interface Hotspot {
     id: string;
@@ -103,17 +103,11 @@ const handleImageUpload = async (file: File) => {
   }
 
   try {
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const pathname = `images/${crypto.randomUUID()}-${safeName}`;
-
-    const blob = await upload(pathname, file, {
-      access: "public",
-      handleUploadUrl: "/api/upload/prepare",
-    });
+    const url = await uploadFileToCloudinary(file)
 
     setEditing((current) =>
-      current ? { ...current, image: blob.url } : current
-    );
+      current ? { ...current, image: url } : current
+    )
   } catch (error) {
     console.error("Image upload failed:", error);
     alert("فشل رفع الصورة. حاول مرة أخرى.");

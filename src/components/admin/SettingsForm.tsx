@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { useAdminLanguage } from '@/contexts/AdminLanguageContext'
 import type { SiteSettings } from '@/lib/types'
-import { upload } from '@vercel/blob/client'
+import { uploadFileToCloudinary } from '@/lib/upload'
 
 interface SettingsFormProps {
   settings: SiteSettings | null
@@ -256,12 +256,15 @@ const uploadFile = async (file: File): Promise<string | null> => {
     const folder = isVideo ? 'videos' : 'images'
     const pathname = `${folder}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
 
-    const blob = await upload(pathname, file, {
-      access: 'public',
-      handleUploadUrl: '/api/upload/prepare',
-    })
+    try {
+    const url = await uploadFileToCloudinary(file)
+    return url
+  } catch (error) {
+    console.error('Upload failed:', error)
+    toast.error(t('settings_form_upload_error'))
+    return null
+  }
 
-    return blob.url
   } catch (error) {
     console.error('Upload failed:', error)
     toast.error(t('settings_form_upload_error'))
